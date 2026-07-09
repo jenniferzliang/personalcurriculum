@@ -1,15 +1,45 @@
 import { Curriculum } from './types';
 import { seedCurricula } from './seed';
+import { artHistoryCurriculum } from './artHistorySeed';
 
-const STORAGE_KEY = 'personalcurriculum.v1';
+const STORAGE_KEY = 'personalcurriculum.v2';
+const LEGACY_STORAGE_KEY = 'personalcurriculum.v1';
+
+// v1 shipped a 2-week "Art History" starter that was later replaced by the
+// full "Art History & Architecture" syllabus. On first load after the update,
+// swap the old starter for the new curriculum — unless it has progress, in
+// which case keep it and add the new curriculum alongside.
+function migrateFromV1(curricula: Curriculum[]): Curriculum[] {
+  const fresh = artHistoryCurriculum();
+  const idx = curricula.findIndex((c) => c.title === 'Art History');
+  if (idx === -1) return [...curricula, fresh];
+  const hasProgress = curricula[idx].units.some((u) => u.resources.some((r) => r.completed));
+  const next = [...curricula];
+  if (hasProgress) {
+    next.splice(idx + 1, 0, fresh);
+  } else {
+    next[idx] = fresh;
+  }
+  return next;
+}
 
 export function loadCurricula(): Curriculum[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === null) return seedCurricula();
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return seedCurricula();
-    return parsed as Curriculum[];
+    if (raw !== null) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as Curriculum[]) : seedCurricula();
+    }
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy !== null) {
+      const parsed = JSON.parse(legacy);
+      if (Array.isArray(parsed)) {
+        const migrated = migrateFromV1(parsed as Curriculum[]);
+        saveCurricula(migrated);
+        return migrated;
+      }
+    }
+    return seedCurricula();
   } catch {
     return seedCurricula();
   }
