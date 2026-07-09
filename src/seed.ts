@@ -1,5 +1,5 @@
 import { Curriculum, newId } from './types';
-import { artHistoryCurriculum } from './artHistorySeed';
+import { artHistoryCurriculum, contemporaryArtCurriculum } from './artHistorySeed';
 
 // Starter curriculums shown on first launch so the app isn't empty.
 // They are fully editable and deletable like anything created in the UI.
@@ -60,5 +60,6 @@ export function seedCurricula(): Curriculum[] {
       ],
     },
     artHistoryCurriculum(),
+    contemporaryArtCurriculum(),
   ];
 }

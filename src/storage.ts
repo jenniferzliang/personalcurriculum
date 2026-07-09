@@ -1,14 +1,15 @@
-import { Curriculum } from './types';
+import { Curriculum, newId } from './types';
 import { seedCurricula } from './seed';
-import { artHistoryCurriculum } from './artHistorySeed';
+import { artHistoryCurriculum, contemporaryArtCurriculum } from './artHistorySeed';
 
-const STORAGE_KEY = 'personalcurriculum.v2';
-const LEGACY_STORAGE_KEY = 'personalcurriculum.v1';
+const STORAGE_KEY = 'personalcurriculum.v3';
+const V2_STORAGE_KEY = 'personalcurriculum.v2';
+const V1_STORAGE_KEY = 'personalcurriculum.v1';
 
 // v1 shipped a 2-week "Art History" starter that was later replaced by the
-// full "Art History & Architecture" syllabus. On first load after the update,
-// swap the old starter for the new curriculum — unless it has progress, in
-// which case keep it and add the new curriculum alongside.
+// full "Art History & Architecture" syllabus. Swap the old starter for the
+// new curriculum — unless it has progress, in which case keep it and add the
+// new curriculum alongside.
 function migrateFromV1(curricula: Curriculum[]): Curriculum[] {
   const fresh = artHistoryCurriculum();
   const idx = curricula.findIndex((c) => c.title === 'Art History');
@@ -23,22 +24,69 @@ function migrateFromV1(curricula: Curriculum[]): Curriculum[] {
   return next;
 }
 
+// v2 kept Contemporary Art as Unit 14 inside Art History & Architecture; it
+// is now its own course. Move the unit (progress intact) into a standalone
+// Contemporary Art curriculum.
+function migrateFromV2(curricula: Curriculum[]): Curriculum[] {
+  const unitTitle = 'Unit 14 — Contemporary Art';
+  for (let i = 0; i < curricula.length; i++) {
+    const uIdx = curricula[i].units.findIndex((u) => u.title === unitTitle);
+    if (uIdx === -1) continue;
+    const moved = curricula[i].units[uIdx];
+    const course: Curriculum = {
+      id: newId(),
+      title: 'Contemporary Art',
+      description:
+        'From Nam June Paik to Yayoi Kusama — contemporary art and postmodernism, via Smarthistory.',
+      color: '#9333ea',
+      createdAt: new Date().toISOString(),
+      units: [
+        {
+          id: newId(),
+          week: 1,
+          title: 'Contemporary Art',
+          description: 'Introductions and key works.',
+          resources: moved.resources,
+        },
+      ],
+    };
+    const next = [...curricula];
+    next[i] = { ...curricula[i], units: curricula[i].units.filter((_, j) => j !== uIdx) };
+    next.splice(i + 1, 0, course);
+    return next;
+  }
+  // Unit not found (renamed or deleted) — just make sure the standalone
+  // course exists.
+  return curricula.some((c) => c.title === 'Contemporary Art')
+    ? curricula
+    : [...curricula, contemporaryArtCurriculum()];
+}
+
+function parseArray(raw: string | null): Curriculum[] | null {
+  if (raw === null) return null;
+  const parsed = JSON.parse(raw);
+  return Array.isArray(parsed) ? (parsed as Curriculum[]) : null;
+}
+
 export function loadCurricula(): Curriculum[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw !== null) {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as Curriculum[]) : seedCurricula();
+    const current = parseArray(localStorage.getItem(STORAGE_KEY));
+    if (current) return current;
+
+    const v2 = parseArray(localStorage.getItem(V2_STORAGE_KEY));
+    if (v2) {
+      const migrated = migrateFromV2(v2);
+      saveCurricula(migrated);
+      return migrated;
     }
-    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (legacy !== null) {
-      const parsed = JSON.parse(legacy);
-      if (Array.isArray(parsed)) {
-        const migrated = migrateFromV1(parsed as Curriculum[]);
-        saveCurricula(migrated);
-        return migrated;
-      }
+
+    const v1 = parseArray(localStorage.getItem(V1_STORAGE_KEY));
+    if (v1) {
+      const migrated = migrateFromV2(migrateFromV1(v1));
+      saveCurricula(migrated);
+      return migrated;
     }
+
     return seedCurricula();
   } catch {
     return seedCurricula();
