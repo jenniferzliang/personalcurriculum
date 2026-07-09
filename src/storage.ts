@@ -3,7 +3,8 @@ import { seedCurricula } from './seed';
 import { artHistoryCurriculum } from './artHistorySeed';
 import { worldHistoryCurriculum } from './worldHistorySeed';
 
-const STORAGE_KEY = 'personalcurriculum.v4';
+const STORAGE_KEY = 'personalcurriculum.v5';
+const V4_STORAGE_KEY = 'personalcurriculum.v4';
 const V3_STORAGE_KEY = 'personalcurriculum.v3';
 const V2_STORAGE_KEY = 'personalcurriculum.v2';
 const V1_STORAGE_KEY = 'personalcurriculum.v1';
@@ -88,6 +89,26 @@ function migrateToV4(curricula: Curriculum[]): Curriculum[] {
   return next;
 }
 
+// v5 added extra readings (Wikipedia overviews) to the World History units.
+// Merge any seed resources the user's copy is missing, matching units by
+// title and resources by URL — existing items and progress are untouched.
+function migrateToV5(curricula: Curriculum[]): Curriculum[] {
+  const fresh = worldHistoryCurriculum();
+  return curricula.map((c) => {
+    if (c.title !== 'World History') return c;
+    return {
+      ...c,
+      units: c.units.map((u) => {
+        const freshUnit = fresh.units.find((f) => f.title === u.title);
+        if (!freshUnit) return u;
+        const have = new Set(u.resources.map((r) => r.url).filter(Boolean));
+        const missing = freshUnit.resources.filter((r) => r.url && !have.has(r.url));
+        return missing.length > 0 ? { ...u, resources: [...u.resources, ...missing] } : u;
+      }),
+    };
+  });
+}
+
 function parseArray(raw: string | null): Curriculum[] | null {
   if (raw === null) return null;
   const parsed = JSON.parse(raw);
@@ -99,16 +120,18 @@ export function loadCurricula(): Curriculum[] {
     const current = parseArray(localStorage.getItem(STORAGE_KEY));
     if (current) return current;
 
-    // v3, v2, and v1 all funnel through the v4 migration; v1 first swaps its
-    // old Art History starter for the full curriculum.
+    // Older versions funnel through the v4 then v5 migrations; v1 first
+    // swaps its old Art History starter for the full curriculum, and v4
+    // data skips straight to v5.
     for (const [key, pre] of [
+      [V4_STORAGE_KEY, null],
       [V3_STORAGE_KEY, (c: Curriculum[]) => c],
       [V2_STORAGE_KEY, (c: Curriculum[]) => c],
       [V1_STORAGE_KEY, migrateFromV1],
     ] as const) {
       const data = parseArray(localStorage.getItem(key));
       if (data) {
-        const migrated = migrateToV4(pre(data));
+        const migrated = migrateToV5(pre === null ? data : migrateToV4(pre(data)));
         saveCurricula(migrated);
         return migrated;
       }
