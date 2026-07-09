@@ -166,27 +166,7 @@ export function artHistoryCurriculum(): Curriculum {
         r('reading', 'Lee Bontecou, Untitled (No. 25)', 'https://smarthistory.org/lee-bontecou-untitled/'),
         r('reading', 'Lygia Clark, Bicho', 'https://smarthistory.org/lygia-clark-bicho/'),
       ]),
-      unit(14, 'Review & Transition to AP', 'Week 14, lighter by design. Then Phase 2: the AP Art History syllabus (weeks 15–26).', [
-        r('reading', 'Revisit your key terms from all 14 units'),
-        r('link', 'Write a full formal analysis of a new work (pick one on Google Arts & Culture)', 'https://artsandculture.google.com'),
-        r('link', 'Browse the AP Art History Syllabus and choose your starting unit', 'https://smarthistory.org/curated-guide/ap-art-history/'),
-      ]),
-    ],
-  };
-}
-
-// Contemporary Art stands alone as its own course (split out of the Art
-// History & Architecture syllabus, where it was Unit 14).
-export function contemporaryArtCurriculum(): Curriculum {
-  return {
-    id: newId(),
-    title: 'Contemporary Art',
-    description:
-      'From Nam June Paik to Yayoi Kusama — contemporary art and postmodernism, via Smarthistory.',
-    color: '#9333ea',
-    createdAt: new Date().toISOString(),
-    units: [
-      unit(1, 'Contemporary Art', 'Introductions and key works.', [
+      unit(13, 'Unit 14 — Contemporary Art', 'Week 13.', [
         r('reading', 'Contemporary art, an introduction', 'https://smarthistory.org/contemporary-art-an-introduction/'),
         r('reading', 'Nam June Paik, Electronic Superhighway', 'https://smarthistory.org/nam-june-paik-electronic-superhighway/'),
         r('reading', 'Maya Lin, Vietnam Veterans Memorial', 'https://smarthistory.org/maya-lin-vietnam-veterans-memorial/'),
