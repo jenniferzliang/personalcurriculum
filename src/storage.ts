@@ -1,8 +1,10 @@
 import { Curriculum, newId } from './types';
 import { seedCurricula } from './seed';
-import { artHistoryCurriculum, contemporaryArtCurriculum } from './artHistorySeed';
+import { artHistoryCurriculum } from './artHistorySeed';
+import { worldHistoryCurriculum } from './worldHistorySeed';
 
-const STORAGE_KEY = 'personalcurriculum.v3';
+const STORAGE_KEY = 'personalcurriculum.v4';
+const V3_STORAGE_KEY = 'personalcurriculum.v3';
 const V2_STORAGE_KEY = 'personalcurriculum.v2';
 const V1_STORAGE_KEY = 'personalcurriculum.v1';
 
@@ -24,42 +26,66 @@ function migrateFromV1(curricula: Curriculum[]): Curriculum[] {
   return next;
 }
 
-// v2 kept Contemporary Art as Unit 14 inside Art History & Architecture; it
-// is now its own course. Move the unit (progress intact) into a standalone
-// Contemporary Art curriculum.
-function migrateFromV2(curricula: Curriculum[]): Curriculum[] {
-  const unitTitle = 'Unit 14 — Contemporary Art';
-  for (let i = 0; i < curricula.length; i++) {
-    const uIdx = curricula[i].units.findIndex((u) => u.title === unitTitle);
-    if (uIdx === -1) continue;
-    const moved = curricula[i].units[uIdx];
-    const course: Curriculum = {
-      id: newId(),
-      title: 'Contemporary Art',
-      description:
-        'From Nam June Paik to Yayoi Kusama — contemporary art and postmodernism, via Smarthistory.',
-      color: '#9333ea',
-      createdAt: new Date().toISOString(),
-      units: [
-        {
-          id: newId(),
-          week: 1,
-          title: 'Contemporary Art',
-          description: 'Introductions and key works.',
-          resources: moved.resources,
-        },
-      ],
-    };
-    const next = [...curricula];
-    next[i] = { ...curricula[i], units: curricula[i].units.filter((_, j) => j !== uIdx) };
-    next.splice(i + 1, 0, course);
-    return next;
+// v4 restores Contemporary Art as Unit 14 of Art History & Architecture
+// (undoing the short-lived v3 split), drops the "Review & Transition to AP"
+// unit, and replaces the two-unit World History starter with the full
+// course (carrying completion over by matching resource URLs).
+function migrateToV4(curricula: Curriculum[]): Curriculum[] {
+  let next = [...curricula];
+
+  // Fold a standalone Contemporary Art course (v3 layout) back into Art
+  // History & Architecture as Unit 14, keeping its completion state.
+  const ahIdx = next.findIndex((c) => c.title === 'Art History & Architecture');
+  const caIdx = next.findIndex((c) => c.title === 'Contemporary Art');
+  if (ahIdx !== -1 && caIdx !== -1) {
+    const ah = next[ahIdx];
+    if (!ah.units.some((u) => u.title === 'Unit 14 — Contemporary Art')) {
+      next[ahIdx] = {
+        ...ah,
+        units: [
+          ...ah.units,
+          {
+            id: newId(),
+            week: 13,
+            title: 'Unit 14 — Contemporary Art',
+            description: 'Week 13.',
+            resources: next[caIdx].units.flatMap((u) => u.resources),
+          },
+        ],
+      };
+    }
+    next = next.filter((_, i) => i !== caIdx);
   }
-  // Unit not found (renamed or deleted) — just make sure the standalone
-  // course exists.
-  return curricula.some((c) => c.title === 'Contemporary Art')
-    ? curricula
-    : [...curricula, contemporaryArtCurriculum()];
+
+  // Remove the review unit.
+  next = next.map((c) =>
+    c.title === 'Art History & Architecture'
+      ? { ...c, units: c.units.filter((u) => u.title !== 'Review & Transition to AP') }
+      : c
+  );
+
+  // Replace the old World History starter with the full course, carrying
+  // completed items over wherever the resource URL matches.
+  const whIdx = next.findIndex((c) => c.title === 'World History');
+  const isOldStarter =
+    whIdx !== -1 && next[whIdx].units.every((u) => u.title === 'Ancient Civilizations' || u.title === 'Classical Antiquity');
+  if (isOldStarter) {
+    const completedUrls = new Set(
+      next[whIdx].units.flatMap((u) => u.resources.filter((r) => r.completed && r.url).map((r) => r.url!))
+    );
+    const fresh = worldHistoryCurriculum();
+    next[whIdx] = {
+      ...fresh,
+      units: fresh.units.map((u) => ({
+        ...u,
+        resources: u.resources.map((r) =>
+          r.url && completedUrls.has(r.url) ? { ...r, completed: true } : r
+        ),
+      })),
+    };
+  }
+
+  return next;
 }
 
 function parseArray(raw: string | null): Curriculum[] | null {
@@ -73,18 +99,19 @@ export function loadCurricula(): Curriculum[] {
     const current = parseArray(localStorage.getItem(STORAGE_KEY));
     if (current) return current;
 
-    const v2 = parseArray(localStorage.getItem(V2_STORAGE_KEY));
-    if (v2) {
-      const migrated = migrateFromV2(v2);
-      saveCurricula(migrated);
-      return migrated;
-    }
-
-    const v1 = parseArray(localStorage.getItem(V1_STORAGE_KEY));
-    if (v1) {
-      const migrated = migrateFromV2(migrateFromV1(v1));
-      saveCurricula(migrated);
-      return migrated;
+    // v3, v2, and v1 all funnel through the v4 migration; v1 first swaps its
+    // old Art History starter for the full curriculum.
+    for (const [key, pre] of [
+      [V3_STORAGE_KEY, (c: Curriculum[]) => c],
+      [V2_STORAGE_KEY, (c: Curriculum[]) => c],
+      [V1_STORAGE_KEY, migrateFromV1],
+    ] as const) {
+      const data = parseArray(localStorage.getItem(key));
+      if (data) {
+        const migrated = migrateToV4(pre(data));
+        saveCurricula(migrated);
+        return migrated;
+      }
     }
 
     return seedCurricula();
