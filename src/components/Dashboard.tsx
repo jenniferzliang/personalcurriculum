@@ -1,4 +1,6 @@
 import { Curriculum, countResources, percent } from '../types';
+import { syncEnabled } from '../sync';
+import type { SyncStatus } from '../App';
 import ProgressBar from './ProgressBar';
 
 interface DashboardProps {
@@ -7,7 +9,18 @@ interface DashboardProps {
   onNew: () => void;
   onExport: () => void;
   onImport: (file: File) => void;
+  accountEmail: string | null;
+  syncStatus: SyncStatus;
+  onSignIn: () => void;
+  onSignOut: () => void;
 }
+
+const SYNC_LABELS: Record<SyncStatus, string> = {
+  idle: '',
+  syncing: 'Syncing…',
+  synced: 'Synced ✓',
+  error: 'Sync failed — changes saved on this device',
+};
 
 function nextUp(c: Curriculum): string | null {
   const sorted = [...c.units].sort((a, b) => a.week - b.week);
@@ -19,9 +32,41 @@ function nextUp(c: Curriculum): string | null {
   return sorted.length > 0 ? 'All caught up 🎉' : null;
 }
 
-export default function Dashboard({ curricula, onOpen, onNew, onExport, onImport }: DashboardProps) {
+export default function Dashboard({
+  curricula,
+  onOpen,
+  onNew,
+  onExport,
+  onImport,
+  accountEmail,
+  syncStatus,
+  onSignIn,
+  onSignOut,
+}: DashboardProps) {
   return (
     <div className="page">
+      {syncEnabled && (
+        <div className="account-bar">
+          {accountEmail ? (
+            <>
+              <span className="muted">
+                {accountEmail}
+                {SYNC_LABELS[syncStatus] && <> · {SYNC_LABELS[syncStatus]}</>}
+              </span>
+              <button className="btn btn-small" onClick={onSignOut}>
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="muted">Working locally on this device only.</span>
+              <button className="btn btn-small btn-primary" onClick={onSignIn}>
+                Sign in to sync
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <header className="page-header">
         <div>
           <h1>My Curriculums</h1>

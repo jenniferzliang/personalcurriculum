@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { Curriculum, Resource, Unit, newId } from './types';
 import { exportCurricula, importCurricula, loadCurricula, saveCurricula } from './storage';
+import { fetchRemote, pushRemote, sendMagicLink, signOut, supabase } from './sync';
 import Dashboard from './components/Dashboard';
 import CurriculumView from './components/CurriculumView';
 import Modal from './components/Modal';
@@ -9,12 +11,14 @@ import {
   CurriculumFormValues,
   ResourceForm,
   ResourceFormValues,
+  SignInForm,
   UnitForm,
   UnitFormValues,
 } from './components/forms';
 
 type ModalState =
   | { kind: 'none' }
+  | { kind: 'sign-in' }
   | { kind: 'new-curriculum' }
   | { kind: 'edit-curriculum'; curriculum: Curriculum }
   | { kind: 'new-unit'; curriculumId: string }
@@ -22,14 +26,72 @@ type ModalState =
   | { kind: 'new-resource'; curriculumId: string; unitId: string }
   | { kind: 'edit-resource'; curriculumId: string; unitId: string; resource: Resource };
 
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
+
 export default function App() {
   const [curricula, setCurricula] = useState<Curriculum[]>(loadCurricula);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalState>({ kind: 'none' });
+  const [session, setSession] = useState<Session | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  // Set when applying data that arrived FROM the server, so the push effect
+  // doesn't immediately echo it back.
+  const skipNextPush = useRef(false);
 
   useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // On sign-in: pull the account's data. First sign-in (no remote data yet)
+  // seeds the account from this device instead.
+  const userId = session?.user.id ?? null;
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    let cancelled = false;
+    (async () => {
+      setSyncStatus('syncing');
+      try {
+        const remote = await fetchRemote(userId);
+        if (cancelled) return;
+        if (remote) {
+          skipNextPush.current = true;
+          setCurricula(remote.curricula);
+        } else {
+          await pushRemote(userId, loadCurricula());
+        }
+        if (!cancelled) setSyncStatus('synced');
+      } catch {
+        if (!cancelled) setSyncStatus('error');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  // Persist locally on every change; push to the account (debounced) when
+  // signed in.
+  useEffect(() => {
     saveCurricula(curricula);
-  }, [curricula]);
+    if (!supabase || !userId) return;
+    if (skipNextPush.current) {
+      skipNextPush.current = false;
+      return;
+    }
+    setSyncStatus('syncing');
+    const timer = setTimeout(async () => {
+      try {
+        await pushRemote(userId, curricula);
+        setSyncStatus('synced');
+      } catch {
+        setSyncStatus('error');
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [curricula, userId]);
 
   const selected = curricula.find((c) => c.id === selectedId) ?? null;
   const closeModal = () => setModal({ kind: 'none' });
@@ -208,7 +270,17 @@ export default function App() {
           onNew={() => setModal({ kind: 'new-curriculum' })}
           onExport={() => exportCurricula(curricula)}
           onImport={handleImport}
+          accountEmail={session?.user.email ?? null}
+          syncStatus={syncStatus}
+          onSignIn={() => setModal({ kind: 'sign-in' })}
+          onSignOut={() => signOut()}
         />
+      )}
+
+      {modal.kind === 'sign-in' && (
+        <Modal title="Sign in to sync" onClose={closeModal}>
+          <SignInForm onSignIn={sendMagicLink} onClose={closeModal} />
+        </Modal>
       )}
 
       {modal.kind === 'new-curriculum' && (

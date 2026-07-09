@@ -11,8 +11,11 @@ your progress through them, week by week.
   out to the reading or video.
 - **Progress tracking** — check items off as you finish them; progress bars roll up per unit and
   per curriculum, and each card shows what's next up.
-- **Local & private** — everything is stored in your browser's localStorage. No account, no
-  server, no tracking.
+- **Local & private by default** — everything is stored in your browser's localStorage. No
+  account required, no tracking.
+- **Optional accounts & cross-device sync** — connect a free Supabase project (see
+  [SYNC_SETUP.md](SYNC_SETUP.md)) and users can sign in with an emailed magic link to sync their
+  curriculums and progress across devices.
 - **Export / import** — download all your data as JSON for backup, and restore it on any device.
 
 The app ships with starter World History and Art History curriculums that you can edit or delete.

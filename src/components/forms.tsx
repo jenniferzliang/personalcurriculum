@@ -8,6 +8,76 @@ import {
   Unit,
 } from '../types';
 
+export function SignInForm({
+  onSignIn,
+  onClose,
+}: {
+  onSignIn: (email: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  if (state === 'sent') {
+    return (
+      <div className="form">
+        <p>
+          Check your inbox — we sent a sign-in link to <strong>{email}</strong>. Open it on this
+          device to finish signing in.
+        </p>
+        <div className="form-actions">
+          <button className="btn btn-primary" onClick={onClose}>
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setState('sending');
+    try {
+      await onSignIn(email.trim());
+      setState('sent');
+    } catch {
+      setState('error');
+    }
+  };
+
+  return (
+    <form className="form" onSubmit={handleSubmit}>
+      <p className="muted">
+        No password needed — we'll email you a one-time sign-in link. Your curriculums and progress
+        will sync to every device you sign in on.
+      </p>
+      <label>
+        Email
+        <input
+          autoFocus
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          required
+        />
+      </label>
+      {state === 'error' && (
+        <p className="form-error">Couldn't send the link. Check the address and try again.</p>
+      )}
+      <div className="form-actions">
+        <button type="button" className="btn" onClick={onClose}>
+          Cancel
+        </button>
+        <button type="submit" className="btn btn-primary" disabled={state === 'sending'}>
+          {state === 'sending' ? 'Sending…' : 'Send sign-in link'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export interface CurriculumFormValues {
   title: string;
   description: string;

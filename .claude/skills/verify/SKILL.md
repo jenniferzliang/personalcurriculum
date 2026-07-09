@@ -41,5 +41,12 @@ Gotchas:
 4. Create a curriculum via the modal → lands on its detail page; add a unit
    (week defaults to max+1) and a resource with a URL → renders as a link.
 5. Probes: week `0` in the unit form is rejected (modal stays open); Escape
-   closes modals; corrupting `personalcurriculum.v1` then reloading falls back
-   to seed data instead of crashing.
+   closes modals; corrupting the storage key then reloading falls back to
+   seed data instead of crashing.
+6. Sync (optional): without `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` the
+   account bar must NOT render and the app is purely local. With dummy values
+   (`VITE_SUPABASE_URL=https://dummy-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=x npm run dev -- --port 5174`), the account bar and
+   sign-in modal render, and a failed magic-link send shows `.form-error`
+   instead of crashing. A real end-to-end sync needs live Supabase
+   credentials in `.env.local`.
