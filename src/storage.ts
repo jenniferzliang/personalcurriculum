@@ -2,8 +2,10 @@ import { Curriculum, newId } from './types';
 import { seedCurricula } from './seed';
 import { artHistoryCurriculum } from './artHistorySeed';
 import { worldHistoryCurriculum } from './worldHistorySeed';
+import { worldIssuesCurriculum } from './worldIssuesSeed';
 
-const STORAGE_KEY = 'personalcurriculum.v6';
+const STORAGE_KEY = 'personalcurriculum.v7';
+const V6_STORAGE_KEY = 'personalcurriculum.v6';
 const V5_STORAGE_KEY = 'personalcurriculum.v5';
 const V4_STORAGE_KEY = 'personalcurriculum.v4';
 const V3_STORAGE_KEY = 'personalcurriculum.v3';
@@ -145,6 +147,14 @@ function migrateToV6(curricula: Curriculum[]): Curriculum[] {
   );
 }
 
+// v7 added the World Issues starter course; add it for devices that don't
+// have it (or a renamed copy would be left alone since we match by title).
+function migrateToV7(curricula: Curriculum[]): Curriculum[] {
+  return curricula.some((c) => c.title === 'World Issues')
+    ? curricula
+    : [...curricula, worldIssuesCurriculum()];
+}
+
 function parseArray(raw: string | null): Curriculum[] | null {
   if (raw === null) return null;
   const parsed = JSON.parse(raw);
@@ -159,9 +169,15 @@ export function loadCurricula(): Curriculum[] {
     // Older versions funnel through the v4 → v5 → v6 migrations; v1 first
     // swaps its old Art History starter for the full curriculum, and v4/v5
     // data enter the chain partway through.
+    const v6 = parseArray(localStorage.getItem(V6_STORAGE_KEY));
+    if (v6) {
+      const migrated = migrateToV7(v6);
+      saveCurricula(migrated);
+      return migrated;
+    }
     const v5 = parseArray(localStorage.getItem(V5_STORAGE_KEY));
     if (v5) {
-      const migrated = migrateToV6(v5);
+      const migrated = migrateToV7(migrateToV6(v5));
       saveCurricula(migrated);
       return migrated;
     }
@@ -173,7 +189,7 @@ export function loadCurricula(): Curriculum[] {
     ] as const) {
       const data = parseArray(localStorage.getItem(key));
       if (data) {
-        const migrated = migrateToV6(migrateToV5(pre === null ? data : migrateToV4(pre(data))));
+        const migrated = migrateToV7(migrateToV6(migrateToV5(pre === null ? data : migrateToV4(pre(data)))));
         saveCurricula(migrated);
         return migrated;
       }

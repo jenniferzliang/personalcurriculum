@@ -4,6 +4,7 @@ import { exportCurricula, importCurricula, loadCurricula, saveCurricula } from '
 import Dashboard from './components/Dashboard';
 import CurriculumView from './components/CurriculumView';
 import Modal from './components/Modal';
+import SyllabusView from './components/SyllabusView';
 import {
   CurriculumForm,
   CurriculumFormValues,
@@ -15,6 +16,7 @@ import {
 
 type ModalState =
   | { kind: 'none' }
+  | { kind: 'syllabus'; curriculum: Curriculum }
   | { kind: 'new-curriculum' }
   | { kind: 'edit-curriculum'; curriculum: Curriculum }
   | { kind: 'new-unit'; curriculumId: string }
@@ -55,6 +57,7 @@ export default function App() {
       color: values.color,
       units: [],
       createdAt: new Date().toISOString(),
+      syllabus: values.syllabus,
     };
     setCurricula((prev) => [...prev, curriculum]);
     closeModal();
@@ -67,6 +70,7 @@ export default function App() {
       title: values.title,
       description: values.description || undefined,
       color: values.color,
+      syllabus: values.syllabus,
     }));
     closeModal();
   };
@@ -187,6 +191,7 @@ export default function App() {
         <CurriculumView
           curriculum={selected}
           onBack={() => setSelectedId(null)}
+          onViewSyllabus={() => setModal({ kind: 'syllabus', curriculum: selected })}
           onEditCurriculum={() => setModal({ kind: 'edit-curriculum', curriculum: selected })}
           onDeleteCurriculum={() => deleteCurriculum(selected)}
           onAddUnit={() => setModal({ kind: 'new-unit', curriculumId: selected.id })}
@@ -211,6 +216,11 @@ export default function App() {
         />
       )}
 
+      {modal.kind === 'syllabus' && modal.curriculum.syllabus && (
+        <Modal title={`${modal.curriculum.title} — Syllabus`} onClose={closeModal} wide>
+          <SyllabusView markdown={modal.curriculum.syllabus} />
+        </Modal>
+      )}
       {modal.kind === 'new-curriculum' && (
         <Modal title="New curriculum" onClose={closeModal}>
           <CurriculumForm onSubmit={createCurriculum} onCancel={closeModal} />

@@ -4,6 +4,7 @@ import ProgressBar from './ProgressBar';
 interface CurriculumViewProps {
   curriculum: Curriculum;
   onBack: () => void;
+  onViewSyllabus: () => void;
   onEditCurriculum: () => void;
   onDeleteCurriculum: () => void;
   onAddUnit: () => void;
@@ -18,6 +19,7 @@ interface CurriculumViewProps {
 export default function CurriculumView({
   curriculum,
   onBack,
+  onViewSyllabus,
   onEditCurriculum,
   onDeleteCurriculum,
   onAddUnit,
@@ -46,6 +48,11 @@ export default function CurriculumView({
           </div>
         </div>
         <div className="header-actions">
+          {curriculum.syllabus && (
+            <button className="btn" onClick={onViewSyllabus}>
+              📄 Syllabus
+            </button>
+          )}
           <button className="btn" onClick={onEditCurriculum}>
             Edit
           </button>
