@@ -1,8 +1,11 @@
 // Checks every resource URL in the seed curriculums.
 // Run: node scripts/check-links.mjs  (needs open internet — runs in CI)
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
-const SEED_FILES = ['src/worldHistorySeed.ts', 'src/artHistorySeed.ts', 'src/seed.ts'];
+// All seed content files, discovered so new courses are checked automatically.
+const SEED_FILES = readdirSync('src')
+  .filter((f) => f === 'seed.ts' || f.endsWith('Seed.ts'))
+  .map((f) => `src/${f}`);
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 link-checker';
 
 const urls = new Set();

@@ -23,6 +23,8 @@ export interface Curriculum {
   color: string;
   units: Unit[];
   createdAt: string;
+  /** Original syllabus document (markdown), viewable in the app. */
+  syllabus?: string;
 }
 
 export const RESOURCE_TYPE_LABELS: Record<ResourceType, string> = {

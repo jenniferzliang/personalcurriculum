@@ -12,6 +12,7 @@ export interface CurriculumFormValues {
   title: string;
   description: string;
   color: string;
+  syllabus?: string;
 }
 
 export function CurriculumForm({
@@ -26,11 +27,22 @@ export function CurriculumForm({
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [color, setColor] = useState(initial?.color ?? CURRICULUM_COLORS[0]);
+  const [syllabus, setSyllabus] = useState<string | undefined>(initial?.syllabus);
+  const [syllabusName, setSyllabusName] = useState<string | null>(null);
+
+  const handleSyllabusFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSyllabus(String(reader.result));
+      setSyllabusName(file.name);
+    };
+    reader.readAsText(file);
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    onSubmit({ title: title.trim(), description: description.trim(), color });
+    onSubmit({ title: title.trim(), description: description.trim(), color, syllabus });
   };
 
   return (
@@ -68,6 +80,40 @@ export function CurriculumForm({
             />
           ))}
         </div>
+      </div>
+      <div className="field">
+        <span className="field-label">
+          Syllabus <span className="muted">(optional Markdown file, viewable in the app)</span>
+        </span>
+        {syllabus ? (
+          <div className="syllabus-attach">
+            <span>📄 {syllabusName ?? 'Syllabus attached'}</span>
+            <button
+              type="button"
+              className="btn btn-small"
+              onClick={() => {
+                setSyllabus(undefined);
+                setSyllabusName(null);
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className="btn btn-small syllabus-upload">
+            Attach .md file
+            <input
+              type="file"
+              accept=".md,.markdown,.txt,text/markdown,text/plain"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleSyllabusFile(file);
+                e.target.value = '';
+              }}
+            />
+          </label>
+        )}
       </div>
       <div className="form-actions">
         <button type="button" className="btn" onClick={onCancel}>
