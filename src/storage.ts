@@ -3,7 +3,8 @@ import { seedCurricula } from './seed';
 import { artHistoryCurriculum } from './artHistorySeed';
 import { worldHistoryCurriculum } from './worldHistorySeed';
 
-const STORAGE_KEY = 'personalcurriculum.v5';
+const STORAGE_KEY = 'personalcurriculum.v6';
+const V5_STORAGE_KEY = 'personalcurriculum.v5';
 const V4_STORAGE_KEY = 'personalcurriculum.v4';
 const V3_STORAGE_KEY = 'personalcurriculum.v3';
 const V2_STORAGE_KEY = 'personalcurriculum.v2';
@@ -109,6 +110,41 @@ function migrateToV5(curricula: Curriculum[]): Curriculum[] {
   });
 }
 
+// v6 swapped most Wikipedia readings in World History for World History
+// Encyclopedia equivalents. Update matching resources in place (same id,
+// completion state preserved).
+const V6_URL_SWAPS: Record<string, { title: string; url: string }> = {
+  'https://en.wikipedia.org/wiki/Neolithic_Revolution': { title: 'Neolithic Period — World History Encyclopedia', url: 'https://www.worldhistory.org/Neolithic/' },
+  'https://en.wikipedia.org/wiki/Cradle_of_civilization': { title: 'Fertile Crescent — World History Encyclopedia', url: 'https://www.worldhistory.org/Fertile_Crescent/' },
+  'https://en.wikipedia.org/wiki/Greco-Persian_Wars': { title: 'Persian Wars — World History Encyclopedia', url: 'https://www.worldhistory.org/Persian_Wars/' },
+  'https://en.wikipedia.org/wiki/Maurya_Empire': { title: 'Mauryan Empire — World History Encyclopedia', url: 'https://www.worldhistory.org/Mauryan_Empire/' },
+  'https://en.wikipedia.org/wiki/Han_dynasty': { title: 'Han Dynasty — World History Encyclopedia', url: 'https://www.worldhistory.org/Han_Dynasty/' },
+  'https://en.wikipedia.org/wiki/Roman_Empire': { title: 'Roman Empire — World History Encyclopedia', url: 'https://www.worldhistory.org/Roman_Empire/' },
+  'https://en.wikipedia.org/wiki/Spread_of_Islam': { title: 'Islam — World History Encyclopedia', url: 'https://www.worldhistory.org/islam/' },
+  'https://en.wikipedia.org/wiki/Silk_Road': { title: 'Silk Road — World History Encyclopedia', url: 'https://www.worldhistory.org/Silk_Road/' },
+  'https://en.wikipedia.org/wiki/Swahili_coast': { title: 'Swahili Coast — World History Encyclopedia', url: 'https://www.worldhistory.org/Swahili_Coast/' },
+  'https://en.wikipedia.org/wiki/Song_dynasty': { title: 'Song Dynasty — World History Encyclopedia', url: 'https://www.worldhistory.org/Song_Dynasty/' },
+  'https://en.wikipedia.org/wiki/Gunpowder_empires': { title: 'Ottoman Empire — World History Encyclopedia', url: 'https://www.worldhistory.org/Ottoman_Empire/' },
+  'https://en.wikipedia.org/wiki/Age_of_Revolution': { title: 'French Revolution — World History Encyclopedia', url: 'https://www.worldhistory.org/French_Revolution/' },
+};
+
+function migrateToV6(curricula: Curriculum[]): Curriculum[] {
+  return curricula.map((c) =>
+    c.title !== 'World History'
+      ? c
+      : {
+          ...c,
+          units: c.units.map((u) => ({
+            ...u,
+            resources: u.resources.map((r) => {
+              const swap = r.url ? V6_URL_SWAPS[r.url] : undefined;
+              return swap ? { ...r, title: swap.title, url: swap.url } : r;
+            }),
+          })),
+        }
+  );
+}
+
 function parseArray(raw: string | null): Curriculum[] | null {
   if (raw === null) return null;
   const parsed = JSON.parse(raw);
@@ -120,9 +156,15 @@ export function loadCurricula(): Curriculum[] {
     const current = parseArray(localStorage.getItem(STORAGE_KEY));
     if (current) return current;
 
-    // Older versions funnel through the v4 then v5 migrations; v1 first
-    // swaps its old Art History starter for the full curriculum, and v4
-    // data skips straight to v5.
+    // Older versions funnel through the v4 → v5 → v6 migrations; v1 first
+    // swaps its old Art History starter for the full curriculum, and v4/v5
+    // data enter the chain partway through.
+    const v5 = parseArray(localStorage.getItem(V5_STORAGE_KEY));
+    if (v5) {
+      const migrated = migrateToV6(v5);
+      saveCurricula(migrated);
+      return migrated;
+    }
     for (const [key, pre] of [
       [V4_STORAGE_KEY, null],
       [V3_STORAGE_KEY, (c: Curriculum[]) => c],
@@ -131,7 +173,7 @@ export function loadCurricula(): Curriculum[] {
     ] as const) {
       const data = parseArray(localStorage.getItem(key));
       if (data) {
-        const migrated = migrateToV5(pre === null ? data : migrateToV4(pre(data)));
+        const migrated = migrateToV6(migrateToV5(pre === null ? data : migrateToV4(pre(data))));
         saveCurricula(migrated);
         return migrated;
       }
