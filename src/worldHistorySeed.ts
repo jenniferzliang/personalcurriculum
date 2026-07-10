@@ -39,48 +39,48 @@ export function worldHistoryCurriculum(): Curriculum {
       unit(1, 'The Agricultural Revolution & First Civilizations', 'Phase 1: Foundations. How farming changed everything.', [
         r('video', 'Crash Course #1 — The Agricultural Revolution', 'https://www.youtube.com/watch?v=Yocja_N5s1I'),
         r('video', 'Crash Course #2 — Indus Valley Civilization', 'https://www.youtube.com/watch?v=n7ndRwqJYDM'),
-        r('reading', 'Neolithic Revolution — Wikipedia', 'https://en.wikipedia.org/wiki/Neolithic_Revolution'),
+        r('reading', 'Neolithic Period — World History Encyclopedia', 'https://www.worldhistory.org/Neolithic/'),
       ]),
       unit(2, 'Mesopotamia & Ancient Egypt', 'River valley civilizations of the Fertile Crescent and the Nile.', [
         r('video', 'Crash Course #3 — Mesopotamia', 'https://www.youtube.com/watch?v=sohXPx_XZ6Y'),
         r('video', 'Crash Course #4 — Ancient Egypt', 'https://www.youtube.com/watch?v=Z3Wvw6BivVI'),
         r('reading', 'Mesopotamia — World History Encyclopedia', 'https://www.worldhistory.org/Mesopotamia/'),
         r('reading', 'Ancient Egypt — World History Encyclopedia', 'https://www.worldhistory.org/egypt/'),
-        r('reading', 'Cradle of civilization — Wikipedia', 'https://en.wikipedia.org/wiki/Cradle_of_civilization'),
+        r('reading', 'Fertile Crescent — World History Encyclopedia', 'https://www.worldhistory.org/Fertile_Crescent/'),
       ]),
       unit(3, 'Persia & Greece', 'The first world empire and the city-states that resisted it.', [
         r('video', 'Crash Course #5 — The Persians & Greeks', 'https://www.youtube.com/watch?v=Q-mkVSasZIM'),
         r('reading', 'Achaemenid Empire — World History Encyclopedia', 'https://www.worldhistory.org/Achaemenid_Empire/'),
         r('reading', 'Ancient Greece — World History Encyclopedia', 'https://www.worldhistory.org/greece/'),
-        r('reading', 'Greco-Persian Wars — Wikipedia', 'https://en.wikipedia.org/wiki/Greco-Persian_Wars'),
+        r('reading', 'Persian Wars — World History Encyclopedia', 'https://www.worldhistory.org/Persian_Wars/'),
       ]),
       unit(4, 'Ancient India & China', 'Hinduism, Buddhism, Confucius, and the Mandate of Heaven.', [
         r('video', 'Crash Course #6 — Buddha and Ashoka', 'https://www.youtube.com/watch?v=8Nn5uqE3C9w'),
         r('video', "Crash Course #7 — 2,000 Years of Chinese History! The Mandate of Heaven and Confucius", 'https://www.youtube.com/watch?v=ylWORyToTo4'),
-        r('reading', 'Maurya Empire — Wikipedia', 'https://en.wikipedia.org/wiki/Maurya_Empire'),
-        r('reading', 'Han dynasty — Wikipedia', 'https://en.wikipedia.org/wiki/Han_dynasty'),
+        r('reading', 'Mauryan Empire — World History Encyclopedia', 'https://www.worldhistory.org/Mauryan_Empire/'),
+        r('reading', 'Han Dynasty — World History Encyclopedia', 'https://www.worldhistory.org/Han_Dynasty/'),
       ]),
       unit(5, 'Rome & the Rise of Christianity', 'Republic, empire, and a small sect that took over both.', [
         r('video', 'Crash Course #10 — The Roman Empire. Or Republic. Or...Which Was It?', 'https://www.youtube.com/watch?v=oPf27gAup9U'),
         r('video', 'Crash Course #11 — Christianity from Judaism to Constantine', 'https://www.youtube.com/watch?v=TG55ErfdaeY'),
-        r('reading', 'Roman Empire — Wikipedia', 'https://en.wikipedia.org/wiki/Roman_Empire'),
+        r('reading', 'Roman Empire — World History Encyclopedia', 'https://www.worldhistory.org/Roman_Empire/'),
       ]),
       unit(6, 'Byzantium & the Rise of Islam', 'Rome continues in the East; a new faith reshapes three continents.', [
         r('video', 'Crash Course #12 — Fall of The Roman Empire...in the 15th Century', 'https://www.youtube.com/watch?v=3PszVWZNWVA'),
         r('video', 'Crash Course #13 — Islam, the Quran, and the Five Pillars', 'https://www.youtube.com/watch?v=TpcbfxtdoI8'),
         r('reading', 'Byzantine Empire — World History Encyclopedia', 'https://www.worldhistory.org/Byzantine_Empire/'),
-        r('reading', 'Spread of Islam — Wikipedia', 'https://en.wikipedia.org/wiki/Spread_of_Islam'),
+        r('reading', 'Islam — World History Encyclopedia', 'https://www.worldhistory.org/islam/'),
       ]),
       unit(7, 'The Silk Road & Ancient Trade', 'Goods, ideas, and diseases in motion across Eurasia.', [
         r('video', 'Crash Course #9 — The Silk Road and Ancient Trade', 'https://www.youtube.com/watch?v=vfe-eNq-Qyg'),
         r('reading', 'Practice: trace the Silk Road on a map and note three goods and one idea that traveled it'),
-        r('reading', 'Silk Road — Wikipedia', 'https://en.wikipedia.org/wiki/Silk_Road'),
+        r('reading', 'Silk Road — World History Encyclopedia', 'https://www.worldhistory.org/Silk_Road/'),
       ]),
       unit(8, 'Medieval Africa & the Americas', 'Mali, the Swahili coast, and the Maya.', [
         r('video', 'Crash Course #16 — Mansa Musa and Islam in Africa', 'https://www.youtube.com/watch?v=jvnU0v6hcUo'),
         r('reading', 'Mali Empire — World History Encyclopedia', 'https://www.worldhistory.org/Mali_Empire/'),
         r('reading', 'Maya Civilization — World History Encyclopedia', 'https://www.worldhistory.org/Maya_Civilization/'),
-        r('reading', 'Swahili coast — Wikipedia', 'https://en.wikipedia.org/wiki/Swahili_coast'),
+        r('reading', 'Swahili Coast — World History Encyclopedia', 'https://www.worldhistory.org/Swahili_Coast/'),
       ]),
       unit(9, 'Medieval Europe & Phase 1 Review', 'How dark were the Dark Ages? Then a look back before the AP phase.', [
         r('video', 'Crash Course #14 — The Dark Ages...How Dark Were They, Really?', 'https://www.youtube.com/watch?v=QV7CanyzhZg'),
@@ -92,7 +92,7 @@ export function worldHistoryCurriculum(): Curriculum {
       unit(10, 'AP Unit 1 — The Global Tapestry (1200–1450)', 'Weeks 10–11. State-building across Song China, Dar al-Islam, Europe, Africa, and the Americas.', [
         r('reading', 'Khan Academy — Unit 1: The Global Tapestry', 'https://www.khanacademy.org/humanities/world-history-project-ap/xb41992e0ff5e0f09:unit-1-the-global-tapestry'),
         r('link', "Close looking: browse the Met Timeline for 1200–1450", 'https://www.metmuseum.org/toah/'),
-        r('reading', 'Song dynasty — Wikipedia', 'https://en.wikipedia.org/wiki/Song_dynasty'),
+        r('reading', 'Song Dynasty — World History Encyclopedia', 'https://www.worldhistory.org/Song_Dynasty/'),
       ]),
       unit(12, 'AP Unit 2 — Networks of Exchange (1200–1450)', 'Weeks 12–13. The Mongols, the Silk Roads revived, and the Indian Ocean world.', [
         r('video', 'Crash Course #17 — Wait For It...The Mongols!', 'https://www.youtube.com/watch?v=szxPar0BcMo'),
@@ -102,7 +102,7 @@ export function worldHistoryCurriculum(): Curriculum {
       unit(14, 'AP Unit 3 — Land-Based Empires (1450–1750)', 'Weeks 14–15. Ottomans, Safavids, Mughals, Qing, and Romanovs.', [
         r('video', 'Crash Course #19 — Venice and the Ottoman Empire', 'https://www.youtube.com/watch?v=UN-II_jBzzo'),
         r('reading', 'OpenStax Vol. 2: chapters on the Islamic empires and early modern Asia', 'https://openstax.org/details/books/world-history-volume-2'),
-        r('reading', 'Gunpowder empires — Wikipedia', 'https://en.wikipedia.org/wiki/Gunpowder_empires'),
+        r('reading', 'Ottoman Empire — World History Encyclopedia', 'https://www.worldhistory.org/Ottoman_Empire/'),
       ]),
       unit(16, 'AP Unit 4 — Transoceanic Interconnections (1450–1750)', 'Weeks 16–17. The Age of Exploration, the Columbian Exchange, and the Atlantic world.', [
         r('video', 'Crash Course #21 — Columbus, de Gama, and Zheng He! 15th Century Mariners', 'https://www.youtube.com/watch?v=NjEGncridoQ'),
@@ -116,7 +116,7 @@ export function worldHistoryCurriculum(): Curriculum {
         r('video', 'Crash Course #29 — The French Revolution', 'https://www.youtube.com/watch?v=lTTvKwCylFY'),
         r('video', 'Crash Course #31 — Latin American Revolutions', 'https://www.youtube.com/watch?v=ZBw35Ze3bg8'),
         r('video', 'Crash Course #32 — Coal, Steam, and The Industrial Revolution', 'https://www.youtube.com/watch?v=zhL5DCizj5c'),
-        r('reading', 'Age of Revolution — Wikipedia', 'https://en.wikipedia.org/wiki/Age_of_Revolution'),
+        r('reading', 'French Revolution — World History Encyclopedia', 'https://www.worldhistory.org/French_Revolution/'),
       ]),
       unit(20, 'AP Unit 6 — Consequences of Industrialization (1750–1900)', 'Weeks 20–21. Capitalism, socialism, and the age of empire.', [
         r('video', 'Crash Course #33 — Capitalism and Socialism', 'https://www.youtube.com/watch?v=B3u4EFTwprM'),
