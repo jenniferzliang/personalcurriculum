@@ -4,7 +4,8 @@ import { artHistoryCurriculum } from './artHistorySeed';
 import { worldHistoryCurriculum } from './worldHistorySeed';
 import { worldIssuesCurriculum } from './worldIssuesSeed';
 
-const STORAGE_KEY = 'personalcurriculum.v7';
+const STORAGE_KEY = 'personalcurriculum.v8';
+const V7_STORAGE_KEY = 'personalcurriculum.v7';
 const V6_STORAGE_KEY = 'personalcurriculum.v6';
 const V5_STORAGE_KEY = 'personalcurriculum.v5';
 const V4_STORAGE_KEY = 'personalcurriculum.v4';
@@ -155,6 +156,87 @@ function migrateToV7(curricula: Curriculum[]): Curriculum[] {
     : [...curricula, worldIssuesCurriculum()];
 }
 
+// v8 corrects Smarthistory URLs: the source syllabus contained many
+// plausible-looking but nonexistent slugs (verified item by item against
+// the live site). Swap in place across all curricula — same resource ids,
+// completion state preserved; titles update only where the target page
+// differs.
+const V8_URL_SWAPS: Record<string, { url: string; title?: string }> = {
+  "https://smarthistory.org/why-look-at-art/": { url: "https://smarthistory.org/why-look-at-art-2/" },
+  "https://smarthistory.org/art-must-be-beautiful/": { url: "https://smarthistory.org/beauty-picasso-old-guitarist/" },
+  "https://smarthistory.org/surface-and-depth/": { url: "https://smarthistory.org/surface-depth/" },
+  "https://smarthistory.org/principles-of-composition/": { url: "https://smarthistory.org/teaching-with-images/principles-of-composition/" },
+  "https://smarthistory.org/how-to-do-visual-analysis/": { url: "https://smarthistory.org/visual-analysis/" },
+  "https://smarthistory.org/iconography-and-iconographic-analysis/": { url: "https://smarthistory.org/introduction-iconographic-analysis/" },
+  "https://smarthistory.org/lochner-madonna-of-the-rose-bower/": { url: "https://smarthistory.org/stefan-lochner-madonna-of-the-rose-bower/" },
+  "https://smarthistory.org/goya-third-of-may-1808/": { url: "https://smarthistory.org/art-historical-analysis/" },
+  "https://smarthistory.org/morandi-still-life/": { url: "https://smarthistory.org/giorgio-morandi-still-life/" },
+  "https://smarthistory.org/describing-what-you-see-sculpture/": { url: "https://smarthistory.org/describing-sculpture/" },
+  "https://smarthistory.org/el-greco-the-burial-of-the-count-of-orgaz/": { url: "https://smarthistory.org/el-greco-burial-of-the-count-orgaz/" },
+  "https://smarthistory.org/seeing-the-passage-of-time/": { url: "https://smarthistory.org/what-is-art-history/", title: "What is art history and where is it going?" },
+  "https://smarthistory.org/what-is-art-provenance/": { url: "https://smarthistory.org/art-provenance/" },
+  "https://smarthistory.org/van-gogh-irises/": { url: "https://smarthistory.org/vincent-van-gogh-irises-the-search-for-violet-getty-conversations/" },
+  "https://smarthistory.org/the-temple-of-dendur/": { url: "https://smarthistory.org/temple-of-dendur/" },
+  "https://smarthistory.org/the-benin-bronzes/": { url: "https://smarthistory.org/benin-bronzes-theft-artistry/" },
+  "https://smarthistory.org/schiele-portrait-of-wally/": { url: "https://smarthistory.org/looting-schiele-wally/" },
+  "https://smarthistory.org/moche-portrait-head-bottle/": { url: "https://smarthistory.org/moche-portrait-bottle/" },
+  "https://smarthistory.org/exploring-color-in-mughal-paintings/": { url: "https://smarthistory.org/color-mughal-paintings/" },
+  "https://smarthistory.org/mughal-masterclass-paint-pigments/": { url: "https://smarthistory.org/a-mughal-masterclass-how-to-make-paint-pigments-from-stones/" },
+  "https://smarthistory.org/ultramarine-blue/": { url: "https://smarthistory.org/ultramarine/", title: "The story of ultramarine, from the Silk Road to Renoir" },
+  "https://smarthistory.org/three-kinds-of-paint/": { url: "https://smarthistory.org/tempera-paint/", title: "Tempera paint" },
+  "https://smarthistory.org/renaissance-watercolors/": { url: "https://smarthistory.org/renaissance-watercolours-materials-and-techniques/" },
+  "https://smarthistory.org/donatellos-marble-carving-technique/": { url: "https://smarthistory.org/donatello-marble-carving-technique/" },
+  "https://smarthistory.org/stained-glass-in-the-renaissance-and-modern-world/": { url: "https://www.khanacademy.org/humanities/medieval-world/gothic-art/beginners-guide-gothic-art/a/stained-glass-history-and-technique", title: "Stained glass: history and technique (Khan Academy)" },
+  "https://smarthistory.org/printmaking-in-europe/": { url: "https://smarthistory.org/printmaking-europe-14001800/" },
+  "https://smarthistory.org/the-daguerreotype/": { url: "https://smarthistory.org/the-daguerreotype-2-of-12/" },
+  "https://smarthistory.org/gordon-parks-off-on-my-own/": { url: "https://smarthistory.org/parks-ellison/" },
+  "https://smarthistory.org/mierle-laderman-ukeles/": { url: "https://smarthistory.org/ukeles-washing/" },
+  "https://smarthistory.org/chauvet-cave/": { url: "https://smarthistory.org/theme-religion/" },
+  "https://smarthistory.org/james-turrell-skyspace/": { url: "https://smarthistory.org/james-turrell-skyspace-the-way-of-color-2/" },
+  "https://smarthistory.org/newgrange/": { url: "https://smarthistory.org/newgrange-a-prehistoric-tomb-in-ireland/" },
+  "https://smarthistory.org/diego-rivera-detroit-industry-murals/": { url: "https://smarthistory.org/rivera-detroit-industry-murals/" },
+  "https://smarthistory.org/standing-male-worshipper-tell-asmar/": { url: "https://smarthistory.org/standing-male-worshipper-from-the-square-temple-at-eshnunna-tell-asmar/" },
+  "https://smarthistory.org/the-treasury-of-atreus/": { url: "https://smarthistory.org/the-treasury-of-atreus-mycenae/" },
+  "https://smarthistory.org/greek-temples-at-paestum/": { url: "https://smarthistory.org/ancient-greek-temples-at-paestum/" },
+  "https://smarthistory.org/the-pantheon-rome/": { url: "https://smarthistory.org/the-pantheon/" },
+  "https://smarthistory.org/the-colosseum/": { url: "https://smarthistory.org/the-colosseum-rome/" },
+  "https://smarthistory.org/the-symmachi-panel/": { url: "https://smarthistory.org/symmachi-panel/" },
+  "https://smarthistory.org/basilica-of-santa-sabina-rome/": { url: "https://smarthistory.org/santa-sabina/" },
+  "https://smarthistory.org/sutton-hoo-ship-burial/": { url: "https://smarthistory.org/the-sutton-hoo-ship-burial/" },
+  "https://smarthistory.org/the-book-of-kells/": { url: "https://smarthistory.org/the-astonishing-book-of-kells/" },
+  "https://smarthistory.org/why-do-people-go-on-pilgrimage/": { url: "https://smarthistory.org/stories-of-the-modern-pilgrimage/", title: "Stories of the modern pilgrimage" },
+  "https://smarthistory.org/the-early-modern-era-the-15th-century/": { url: "https://smarthistory.org/early-modern-era-15th-century/" },
+  "https://smarthistory.org/the-early-modern-era-the-16th-century/": { url: "https://smarthistory.org/early-modern-era-16th-century/" },
+  "https://smarthistory.org/the-early-modern-era-the-17th-century/": { url: "https://smarthistory.org/early-modern-era-17th-century/" },
+  "https://smarthistory.org/the-early-modern-era-the-18th-century/": { url: "https://smarthistory.org/early-modern-era-18th-century/" },
+  "https://smarthistory.org/filippo-brunelleschi-dome-of-the-cathedral-of-florence/": { url: "https://smarthistory.org/brunelleschi-dome-of-the-cathedral-of-florence/" },
+  "https://smarthistory.org/hieronymus-bosch-the-garden-of-earthly-delights/": { url: "https://smarthistory.org/bosch-the-garden-of-earthly-delights/" },
+  "https://smarthistory.org/durers-rhinoceros/": { url: "https://smarthistory.org/albrecht-durer-rhinoceros/" },
+  "https://smarthistory.org/maria-sibylla-merian/": { url: "https://smarthistory.org/maria-sybilla-merians-metamorphosis-of-a-small-emperor-moth-on-a-damson-plumgetty-conversations/" },
+  "https://smarthistory.org/francisco-clapera-casta-paintings/": { url: "https://smarthistory.org/francisco-clapera-casta/" },
+  "https://smarthistory.org/the-triangle-trade/": { url: "https://smarthistory.org/colonial-sugar/" },
+  "https://smarthistory.org/becoming-modern-in-19th-century-europe/": { url: "https://smarthistory.org/becoming-modern-an-introduction/" },
+  "https://smarthistory.org/monet-the-basin-at-argenteuil/": { url: "https://smarthistory.org/recognize-monet/" },
+  "https://smarthistory.org/pablo-picasso-guernica/": { url: "https://smarthistory.org/picasso-guernica/" },
+  "https://smarthistory.org/jackson-pollock-autumn-rhythm/": { url: "https://smarthistory.org/autumn-rhythm/" },
+  "https://smarthistory.org/lee-bontecou-untitled/": { url: "https://smarthistory.org/lee-bontecou-untitled-no-25/" },
+  "https://smarthistory.org/nam-june-paik-electronic-superhighway/": { url: "https://smarthistory.org/nam-june-paik-electronic-superhighway-continental-u-s-alaska-hawaii/" },
+  "https://smarthistory.org/yayoi-kusama-infinity-mirrored-room/": { url: "https://smarthistory.org/yayoi-kusama-infinity-mirrored-room-heart-dancing-universe/" },
+};
+
+function migrateToV8(curricula: Curriculum[]): Curriculum[] {
+  return curricula.map((c) => ({
+    ...c,
+    units: c.units.map((u) => ({
+      ...u,
+      resources: u.resources.map((r) => {
+        const swap = r.url ? V8_URL_SWAPS[r.url] : undefined;
+        return swap ? { ...r, url: swap.url, title: swap.title ?? r.title } : r;
+      }),
+    })),
+  }));
+}
+
 function parseArray(raw: string | null): Curriculum[] | null {
   if (raw === null) return null;
   const parsed = JSON.parse(raw);
@@ -169,15 +251,21 @@ export function loadCurricula(): Curriculum[] {
     // Older versions funnel through the v4 → v5 → v6 migrations; v1 first
     // swaps its old Art History starter for the full curriculum, and v4/v5
     // data enter the chain partway through.
+    const v7 = parseArray(localStorage.getItem(V7_STORAGE_KEY));
+    if (v7) {
+      const migrated = migrateToV8(v7);
+      saveCurricula(migrated);
+      return migrated;
+    }
     const v6 = parseArray(localStorage.getItem(V6_STORAGE_KEY));
     if (v6) {
-      const migrated = migrateToV7(v6);
+      const migrated = migrateToV8(migrateToV7(v6));
       saveCurricula(migrated);
       return migrated;
     }
     const v5 = parseArray(localStorage.getItem(V5_STORAGE_KEY));
     if (v5) {
-      const migrated = migrateToV7(migrateToV6(v5));
+      const migrated = migrateToV8(migrateToV7(migrateToV6(v5)));
       saveCurricula(migrated);
       return migrated;
     }
@@ -189,7 +277,7 @@ export function loadCurricula(): Curriculum[] {
     ] as const) {
       const data = parseArray(localStorage.getItem(key));
       if (data) {
-        const migrated = migrateToV7(migrateToV6(migrateToV5(pre === null ? data : migrateToV4(pre(data)))));
+        const migrated = migrateToV8(migrateToV7(migrateToV6(migrateToV5(pre === null ? data : migrateToV4(pre(data))))));
         saveCurricula(migrated);
         return migrated;
       }
